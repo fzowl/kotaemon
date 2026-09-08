@@ -19,19 +19,21 @@ def _import_voyageai():
 
 
 class VoyageAIReranking(BaseReranking):
-    """VoyageAI Reranking model"""
+    """VoyageAI by MongoDB Reranking model"""
 
     model_name: str = Param(
-        "rerank-2",
+        "rerank-2.5",
         help=(
             "ID of the model to use. You can go to [Supported Models]"
-            "(https://docs.voyageai.com/docs/reranker) to see the supported models"
+            "(https://docs.voyageai.com/docs/reranker) to see the supported "
+            "models. Current models include `rerank-2.5` and `rerank-2.5-lite` "
+            "(generally available), and `rerank-3` and `rerank-3-lite` (preview)."
         ),
         required=True,
     )
     api_key: str = Param(
         config("VOYAGE_API_KEY", ""),
-        help="VoyageAI API key",
+        help="VoyageAI by MongoDB API key",
         required=True,
     )
 

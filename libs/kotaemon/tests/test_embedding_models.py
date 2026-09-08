@@ -170,3 +170,44 @@ def test_voyageai_embeddings(sync_call, async_call):
     model = VoyageAIEmbeddings(api_key="test")
     output = model("Hello, world!")
     assert all(isinstance(doc, DocumentWithEmbedding) for doc in output)
+
+
+_voyage_ctx_item = Mock()
+_voyage_ctx_item.embeddings = [[1.0, 2.1, 3.2]]
+voyage_ctx_output_mock = Mock()
+voyage_ctx_output_mock.results = [_voyage_ctx_item]
+
+
+@skip_when_voyageai_not_installed
+@patch(
+    "voyageai.Client.contextualized_embed",
+    return_value=voyage_ctx_output_mock,
+)
+def test_voyageai_contextualized_document_embeddings(ctx_call):
+    model = VoyageAIEmbeddings(api_key="test", model="voyage-context-4")
+    output = model("Hello, world!")
+    assert all(isinstance(doc, DocumentWithEmbedding) for doc in output)
+
+    # Document path: flat list[str] input, auto-chunking on, chunk_size 32000.
+    _, kwargs = ctx_call.call_args
+    assert kwargs["inputs"] == ["Hello, world!"]
+    assert kwargs["model"] == "voyage-context-4"
+    assert kwargs["enable_auto_chunking"] is True
+    assert kwargs["chunk_size"] == 32000
+
+
+@skip_when_voyageai_not_installed
+@patch(
+    "voyageai.Client.contextualized_embed",
+    return_value=voyage_ctx_output_mock,
+)
+def test_voyageai_contextualized_query_embeddings(ctx_call):
+    model = VoyageAIEmbeddings(api_key="test", model="voyage-context-4")
+    model("Hello, world!", input_type="query")
+
+    # Query path: the API rejects auto-chunking, so it is disabled and
+    # chunk_size is dropped.
+    _, kwargs = ctx_call.call_args
+    assert kwargs["input_type"] == "query"
+    assert kwargs["enable_auto_chunking"] is False
+    assert "chunk_size" not in kwargs
