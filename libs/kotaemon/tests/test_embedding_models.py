@@ -170,3 +170,27 @@ def test_voyageai_embeddings(sync_call, async_call):
     model = VoyageAIEmbeddings(api_key="test")
     output = model("Hello, world!")
     assert all(isinstance(doc, DocumentWithEmbedding) for doc in output)
+
+
+voyage_contextualized_mock = Mock()
+_voyage_ctx_result = Mock()
+_voyage_ctx_result.index = 0
+_voyage_ctx_result.embeddings = [[1.0, 2.1, 3.2]]
+voyage_contextualized_mock.results = [_voyage_ctx_result]
+
+
+@skip_when_voyageai_not_installed
+@patch(
+    "voyageai.Client.contextualized_embed",
+    return_value=voyage_contextualized_mock,
+)
+def test_voyageai_contextualized_embeddings(contextualized_call):
+    model = VoyageAIEmbeddings(api_key="test", model="voyage-context-4")
+    output = model("Hello, world!")
+    assert all(isinstance(doc, DocumentWithEmbedding) for doc in output)
+    # Contextualized models must be routed through the contextualized_embed API
+    # with inputs shaped per the official Union[List[List[str]], List[str]] spec.
+    contextualized_call.assert_called_once()
+    _, kwargs = contextualized_call.call_args
+    assert kwargs["inputs"] == [["Hello, world!"]]
+    assert kwargs["model"] == "voyage-context-4"

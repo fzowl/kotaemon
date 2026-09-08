@@ -19,26 +19,27 @@ def _import_voyageai():
 
 
 class VoyageAIReranking(BaseReranking):
-    """VoyageAI Reranking model"""
+    """VoyageAI by MongoDB Reranking model"""
 
     model_name: str = Param(
-        "rerank-2",
+        "rerank-2.5",
         help=(
             "ID of the model to use. You can go to [Supported Models]"
-            "(https://docs.voyageai.com/docs/reranker) to see the supported models"
+            "(https://docs.voyageai.com/docs/reranker) to see the supported "
+            "models. Current models include `rerank-2.5` and `rerank-2.5-lite`."
         ),
         required=True,
     )
     api_key: str = Param(
         config("VOYAGE_API_KEY", ""),
-        help="VoyageAI API key",
+        help="VoyageAI by MongoDB API key",
         required=True,
     )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.api_key:
-            raise ValueError("API key must be provided for VoyageAIEmbeddings.")
+            raise ValueError("API key must be provided for VoyageAIReranking.")
 
         self._client = _import_voyageai().Client(api_key=self.api_key)
         self._aclient = _import_voyageai().AsyncClient(api_key=self.api_key)
